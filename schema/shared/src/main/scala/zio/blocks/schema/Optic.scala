@@ -81,7 +81,7 @@ sealed trait Optic[S, A] { self =>
 
     val list = self.asEquivalent[List[B]]
     list.focus match {
-      case List(element) => list(Traversal.listValueAtIndex(index)(element))
+      case List(element) => list(Traversal.valueAtIndex(index)(element))
       case _             => sys.error("Expected List")
     }
   }
@@ -777,9 +777,7 @@ object Traversal {
 
   def valueAtIndex[A](index: Int)(listBound: Reflect.Bound[A]): Optional[List[A], A] = {
     require(listBound ne null)
-    new OptionalImpl(sources = Array(listBound), focusTerms = Reflect.list(listBound).element.updated())
-    new TraversalImpl(Array(Reflect.list(listBound)), Array(Reflect.list(listBound).element.asTerm("element")))
-    seqValues(Reflect.list(listBound))
+    new OptionalImpl(sources = Array(listBound), focusTerms = Array(Reflect.list(listBound).element.asTerm(s"$index-th element")))
   }
 
   def mapKeys[Key, Value, M[_, _]](map: Reflect.Map.Bound[Key, Value, M]): Traversal[M[Key, Value], Key] = {
