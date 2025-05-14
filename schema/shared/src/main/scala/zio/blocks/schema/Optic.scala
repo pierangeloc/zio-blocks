@@ -76,7 +76,7 @@ sealed trait Optic[S, A] { self =>
     }
   }
 
-  final def atIndex[B](index: Int)(implicit ev: A =:= List[B]): Optional[S, B] = {
+  final def atIndex[B](index: Int)(implicit ev: A =:= List[B]): Optic[S, B] = {
     import Reflect.Extractors.List
 
     val list = self.asEquivalent[List[B]]
