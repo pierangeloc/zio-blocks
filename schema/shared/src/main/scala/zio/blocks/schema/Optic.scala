@@ -1,7 +1,9 @@
 package zio.blocks.schema
 
+import zio.blocks.schema.Optional.OptionalImpl
 import zio.blocks.schema.binding.RegisterOffset.RegisterOffset
 import zio.blocks.schema.binding._
+
 import scala.collection.mutable
 
 /**
@@ -73,6 +75,18 @@ sealed trait Optic[S, A] { self =>
       case _             => sys.error("Expected List")
     }
   }
+
+  final def atIndex[B](index: Int)(implicit ev: A =:= List[B]): Optional[S, B] = {
+    import Reflect.Extractors.List
+
+    val list = self.asEquivalent[List[B]]
+    list.focus match {
+      case List(element) => list(Traversal.listValueAtIndex(index)(element))
+      case _             => sys.error("Expected List")
+    }
+  }
+
+  final def atKey[K](k: K)(implicit ev: A <:< Map[K, ?]): Optional[S, (K, ?)] = ???
 
   final def vectorValues[B](implicit ev: A =:= Vector[B]): Traversal[S, B] = {
     import Reflect.Extractors.Vector
@@ -759,6 +773,13 @@ object Traversal {
   def listValues[A](reflect: Reflect.Bound[A]): Traversal[List[A], A] = {
     require(reflect ne null)
     seqValues(Reflect.list(reflect))
+  }
+
+  def valueAtIndex[A](index: Int)(listBound: Reflect.Bound[A]): Optional[List[A], A] = {
+    require(listBound ne null)
+    new OptionalImpl(sources = Array(listBound), focusTerms = Reflect.list(listBound).element.updated())
+    new TraversalImpl(Array(Reflect.list(listBound)), Array(Reflect.list(listBound).element.asTerm("element")))
+    seqValues(Reflect.list(listBound))
   }
 
   def mapKeys[Key, Value, M[_, _]](map: Reflect.Map.Bound[Key, Value, M]): Traversal[M[Key, Value], Key] = {

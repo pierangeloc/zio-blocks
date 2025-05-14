@@ -25,7 +25,8 @@ final case class Patch[S](ops: Vector[Patch.Pair[S, ?]], source: Schema[S]) {
       acc match {
         case Some(s) =>
           single match {
-            case LensPair(optic, LensOp.Set(a))               => Some(optic.replace(s, a))
+            case LensPair(optic, LensOp.Set(a)) => Some(optic.replace(s, a))
+//            case LensPair(optic, LensOp.Delete(a))            => ??? //Some (optic.replace(s, a))
             case PrismPair(optic, PrismOp.ReverseGet(a))      => Some(optic.reverseGet(a))
             case OptionalPair(optic, OptionalOp.Replace(a))   => Some(optic.replace(s, a))
             case TraversalPair(optic, TraversalOp.Replace(a)) => Some(optic.modify(s, _ => a))
@@ -55,7 +56,8 @@ object Patch {
   sealed trait LensOp[A] extends Op[A]
 
   object LensOp {
-    case class Set[A](a: A) extends LensOp[A]
+    case class Set[A](a: A)    extends LensOp[A]
+    case class Delete[A](a: A) extends LensOp[A] //this should work only with sequences and maps
   }
 
   sealed trait PrismOp[A] extends Op[A]
@@ -74,6 +76,7 @@ object Patch {
 
   object TraversalOp {
     case class Replace[A](a: A) extends TraversalOp[A]
+    case class Add[A](a: A)     extends TraversalOp[A]
   }
 
   sealed trait Pair[S, A] {
